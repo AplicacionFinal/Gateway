@@ -7,7 +7,7 @@ El *gateway* se va a  encargar de recibir las solicitudes *http* que mandan los 
 ## Construcción del Gateway
 ### Pasos a Seguir: 
 1. Definir las variables de entorno y un esquema de validacion de las mismas.
-2. Definir
+2. Definir la API con la que los clientes van a realizar solicitudes al servidor. 
 
 ### 1. VARIABLES DE ENTORNO
 
@@ -70,3 +70,69 @@ variable_entorno: process.env.nombre_variable_entorno,
 	### Utilizar Logger: 
 
 	Podemos implementar el módulo **'Logger'** para mostrar por consola logs con el formato de los demás. 
+	
+	
+### 2.API
+
+El *Gateway* va a comunicarse con 2 bases de datos diferentes: una base de datos de jugadores, otra de cuentas de usuario. Por lo que demomento vamos a definir dos recursos: 
+
+* account
+* player
+
+
+Las funciones que van a poder solicitar los usuarios: 
+
+- Obtener toda la información de su cuenta. 
+- Loggearse en la cuenta.
+- Registrarse. 
+- Solicitar todos los jugadores por páginas o con una barra para subir y bajar. 
+
+
+#### 1. ACCOUNT
+
+##### ACCOUNT CONTROLLER
+
+En account nos vamos a quedar solo con las direcciones que nos interesan: 
+
+* Post('/login').
+* Post('/register').
+* Get('/acountinfo'). 
+
+
+##### ACCOUNT DTOS
+
+En **'AccountDto.ts'** voy a definir todos los atributos con sus validators de tipo y sus transformers y luego voy a crear DTOS que herenden las propiedades del padre diferenciandolos solo en que determinan que parámetro es requerido y cual no. 
+
+Para implementar los validators y los transformers debemos instalar los paquetes: 
+* **'class-validator'**
+* **'class-transformer'**
+
+También debemos incluir en el **'main.ts'** el siguiente código: 
+```
+app.useGlobalPipes(
+	new ValidationPipe({
+		whitelist:true,
+		forbidUnknownValues: true,
+	})
+)
+```
+
+
+##### ENVIAR PETICIONES NATS
+
+* Debemos instalar el paquete **'nats'** ```npm i --save nats```.
+* Debemos importar el **'ClientsModule'** y configurarlo con la función **'ClientsModule.register()'** de la siguiente manera:
+```
+imports: [
+	ClientsModule.register([
+		{
+			name: NATS_SERVICE,
+			transport: Transport.NATS,
+			options: {
+				servers:[NATS_SERVER]
+			}
+		}
+	])
+]
+```
+* Debemos tener en cuenta en la configuración de NATS que **'host'** y **'port'** con **'servers'** son excluyentes.
